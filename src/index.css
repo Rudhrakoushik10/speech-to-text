@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-olive-50: #f4f7f2;
@@ -21,5 +22,5 @@
 }
 
 body {
-  @apply bg-beige-50 text-olive-900 font-sans antialiased;
+  @apply bg-beige-50 text-olive-900 font-sans antialiased dark:bg-olive-900 dark:text-beige-100;
 }

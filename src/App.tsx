@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ThemeProvider } from './lib/theme'
 import { auth } from './lib/auth'
 import { Login } from './components/Login'
 import { Dashboard } from './components/Dashboard'
@@ -32,14 +33,16 @@ export default function App() {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ session, loading }}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthContext.Provider>
+    <ThemeProvider>
+      <AuthContext.Provider value={{ session, loading }}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthContext.Provider>
+    </ThemeProvider>
   )
 }

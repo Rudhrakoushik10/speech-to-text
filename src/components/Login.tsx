@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '../App'
 import { auth } from '../lib/auth'
+import { ThemeToggle } from './ThemeToggle'
 import { Loader2, Leaf } from 'lucide-react'
 
 export function Login() {
@@ -16,7 +17,7 @@ export function Login() {
 
   if (authLoading) {
     return (
-      <div className="flex bg-beige-50 min-h-screen items-center justify-center">
+      <div className="flex bg-beige-50 dark:bg-olive-900 min-h-screen items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-olive-600" />
       </div>
     )
@@ -56,42 +57,45 @@ export function Login() {
   const hasConfig = import.meta.env.VITE_NHOST_SUBDOMAIN && import.meta.env.VITE_NHOST_REGION
 
   return (
-    <div className="flex bg-beige-50 min-h-screen flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-olive-200 selection:text-olive-900">
+    <div className="flex bg-beige-50 dark:bg-olive-900 min-h-screen flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-olive-200 selection:text-olive-900 dark:selection:bg-olive-600 dark:selection:text-beige-100">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-14 h-14 rounded-2xl bg-olive-100 flex items-center justify-center shadow-sm border border-olive-200">
             <Leaf className="w-7 h-7 text-olive-700" strokeWidth={1.5} />
           </div>
         </div>
-        <h2 className="mt-8 text-center text-3xl font-light text-olive-900 tracking-tight">
+        <h2 className="mt-8 text-center text-3xl font-light text-olive-900 dark:text-beige-100 tracking-tight">
           {isLoginView ? 'Welcome back' : 'Create an account'}
         </h2>
-        <p className="mt-2 text-center text-sm text-olive-600/80">
+        <p className="mt-2 text-center text-sm text-olive-600/80 dark:text-olive-400/80">
           {isLoginView ? 'Sign in to access your dashboard' : 'Create your account'}
         </p>
 
         {!hasConfig && (
-          <div className="mt-8 p-4 rounded-xl bg-orange-50 text-orange-800 text-sm border border-orange-200 shadow-sm mx-auto w-full max-w-md font-medium">
+          <div className="mt-8 p-4 rounded-xl bg-orange-50 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200 text-sm border border-orange-200 dark:border-orange-700 shadow-sm mx-auto w-full max-w-md font-medium">
             <strong>Missing Nhost Configuration!</strong> Please set <code>VITE_NHOST_SUBDOMAIN</code> and <code>VITE_NHOST_REGION</code> in your .env file.
           </div>
         )}
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-10 px-6 shadow-xl shadow-olive-900/5 sm:rounded-3xl sm:px-10 border border-beige-200">
+        <div className="bg-white dark:bg-olive-800 py-10 px-6 shadow-xl shadow-olive-900/5 sm:rounded-3xl sm:px-10 border border-beige-200 dark:border-olive-700">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {errorMsg && (
-              <div className="p-4 rounded-xl bg-red-50/80 text-red-700 text-sm border border-red-100 font-medium tracking-wide">
+              <div className="p-4 rounded-xl bg-red-50/80 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm border border-red-100 dark:border-red-800 font-medium tracking-wide">
                 {errorMsg}
               </div>
             )}
             {successMsg && (
-              <div className="p-4 rounded-xl bg-green-50/80 text-green-700 text-sm border border-green-100 font-medium tracking-wide">
+              <div className="p-4 rounded-xl bg-green-50/80 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm border border-green-100 dark:border-green-800 font-medium tracking-wide">
                 {successMsg}
               </div>
             )}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-olive-800 tracking-wide">
+              <label htmlFor="email" className="block text-sm font-medium text-olive-800 dark:text-olive-300 tracking-wide">
                 Email address
               </label>
               <div className="mt-2">
@@ -103,13 +107,13 @@ export function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-4 py-3 bg-beige-50/50 border border-beige-200 rounded-xl shadow-sm placeholder-olive-400 text-olive-900 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-olive-500 focus:bg-white sm:text-sm transition-all focus:shadow-md"
+                  className="appearance-none block w-full px-4 py-3 bg-beige-50/50 dark:bg-olive-700/50 border border-beige-200 dark:border-olive-600 rounded-xl shadow-sm placeholder-olive-400 dark:placeholder-olive-500 text-olive-900 dark:text-beige-100 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-olive-500 focus:bg-white dark:focus:bg-olive-700 sm:text-sm transition-all focus:shadow-md"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-olive-800 tracking-wide">
+              <label htmlFor="password" className="block text-sm font-medium text-olive-800 dark:text-olive-300 tracking-wide">
                 Password
               </label>
               <div className="mt-2">
@@ -121,7 +125,7 @@ export function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-4 py-3 bg-beige-50/50 border border-beige-200 rounded-xl shadow-sm placeholder-olive-400 text-olive-900 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-olive-500 focus:bg-white sm:text-sm transition-all focus:shadow-md"
+                  className="appearance-none block w-full px-4 py-3 bg-beige-50/50 dark:bg-olive-700/50 border border-beige-200 dark:border-olive-600 rounded-xl shadow-sm placeholder-olive-400 dark:placeholder-olive-500 text-olive-900 dark:text-beige-100 focus:outline-none focus:ring-2 focus:ring-olive-500 focus:border-olive-500 focus:bg-white dark:focus:bg-olive-700 sm:text-sm transition-all focus:shadow-md"
                 />
               </div>
             </div>
@@ -130,7 +134,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-olive-600 hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500 focus:ring-offset-beige-50 disabled:opacity-70 disabled:cursor-not-allowed transition-all hover:shadow-lg active:scale-[0.98]"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-olive-600 hover:bg-olive-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-olive-500 focus:ring-offset-beige-50 dark:focus:ring-offset-olive-900 disabled:opacity-70 disabled:cursor-not-allowed transition-all hover:shadow-lg active:scale-[0.98]"
               >
                 {isSubmitting && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
                 {isLoginView ? 'Sign in' : 'Sign up'}
@@ -146,7 +150,7 @@ export function Login() {
                 setErrorMsg('')
                 setSuccessMsg('')
               }}
-              className="text-sm font-medium text-olive-600 hover:text-olive-800 transition-colors tracking-wide"
+              className="text-sm font-medium text-olive-600 hover:text-olive-800 dark:text-olive-400 dark:hover:text-olive-200 transition-colors tracking-wide"
             >
               {isLoginView
                 ? "Don't have an account? Create one"
