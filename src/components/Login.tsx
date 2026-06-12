@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '../App'
+import { auth } from '../lib/auth'
 import { Loader2, Leaf } from 'lucide-react'
 
 export function Login() {
@@ -32,20 +33,20 @@ export function Login() {
     setSuccessMsg('')
     setIsSubmitting(true)
 
-    if (isLoginView) {
-      const { error } = await auth.signIn({ email, password })
-      if (error) {
-        setErrorMsg(error.message)
+    try {
+      if (isLoginView) {
+        const { error } = await auth.signIn({ email, password })
+        if (error) {
+          setErrorMsg(error.message)
+        }
       } else {
-        setSuccessMsg('Login successful! Redirecting...')
+        const { error } = await auth.signUp({ email, password })
+        if (error) {
+          setErrorMsg(error.message)
+        }
       }
-    } else {
-      const { error } = await auth.signUp({ email, password })
-      if (error) {
-        setErrorMsg(error.message)
-      } else {
-        setSuccessMsg('Sign up successful!')
-      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Network error. Check your connection.')
     }
     setIsSubmitting(false)
   }
