@@ -40,8 +40,10 @@ export function Login() {
           setErrorMsg(error.message)
         }
       } else {
-        const { error } = await auth.signUp({ email, password })
-        if (error) {
+        const { error, needsVerification } = await auth.signUp({ email, password })
+        if (needsVerification) {
+          setSuccessMsg('Account created! Check your email to verify before signing in.')
+        } else if (error) {
           setErrorMsg(error.message)
         }
       }

@@ -1,88 +1,103 @@
 # Speech to Text
 
-A real-time speech-to-text web application with Nhost authentication and Deepgram transcription.
+Real-time speech-to-text web app with Nhost authentication and Deepgram transcription.
 
 ## Features
 
 - **Authentication** — Sign up / Sign in with email + password via Nhost
-- **Real-time Speech-to-Text** — Live microphone capture streamed to Deepgram via WebSocket with interim results
-- **Responsive UI** — Tailwind CSS with a clean, modern design
+- **Live Transcription** — Real-time mic capture streamed to Deepgram WebSocket (Nova-2 model) with interim results
+- **Production Ready** — Error boundaries, SPA routing, secure env var handling
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, TypeScript, Vite |
-| Styling | Tailwind CSS v4, Lucide icons |
-| Auth | Nhost (direct REST API) |
-| Transcription | Deepgram (WebSocket, Nova-2 model) |
+| Frontend | Auth | Transcription | Styling |
+|----------|------|---------------|---------|
+| React 19 | Nhost (REST API) | Deepgram SDK v3 | Tailwind CSS v4 |
+| TypeScript | Direct fetch | WebSocket live | Lucide icons |
+| Vite 6 | localStorage sessions | Nova-2 model | Olive/Beige theme |
 
-## Prerequisites
+## Quick Start
+
+### Prerequisites
 
 - Node.js 18+
-- Nhost account with a project
-- Deepgram API key
+- [Nhost](https://nhost.io) project
+- [Deepgram](https://deepgram.com) API key
 
-## Setup
-
-1. **Clone the repo**
+### Setup
 
 ```bash
-git clone <repo-url>
-cd speech-to-text
-```
-
-2. **Install dependencies**
-
-```bash
+# Install dependencies
 npm install
-```
 
-3. **Configure environment**
+# Configure environment
+cp .env.example .env
+# Edit .env with your credentials:
+#   VITE_NHOST_SUBDOMAIN=your-nhost-subdomain
+#   VITE_NHOST_REGION=your-nhost-region (e.g. eu-central-1)
+#   VITE_DEEPGRAM_KEY=your-deepgram-api-key
 
-Copy `.env.example` to `.env` and fill in your credentials:
-
-```env
-VITE_NHOST_SUBDOMAIN=your-nhost-subdomain
-VITE_NHOST_REGION=your-nhost-region
-VITE_DEEPGRAM_KEY=your-deepgram-api-key
-```
-
-4. **Run the dev server**
-
-```bash
+# Start dev server
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser.
+Open http://localhost:5173
 
 ## Usage
 
-1. Create an account or sign in
-2. Click **"Start listening"** to begin microphone capture
-3. Speak — transcript appears in real-time
-4. Click **"Stop listening"** to end the session
+1. **Sign up** — Create an account with email + password
+2. **Sign in** — Log in to access the dashboard
+3. **Transcribe** — Click "Start listening", speak into your mic, see live transcript
+4. **Sign out** — End session from the dashboard header
 
-## Build for Production
+> **Note:** If sign-up shows "Check your email to verify", your Nhost project has email verification enabled. You can disable it in Nhost Dashboard → Settings → "Require email verification" or verify the user in the auth.users table.
 
-```bash
-npm run build
-```
+## Scripts
 
-Output goes to `dist/`, ready to deploy as a static site.
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production (output: `dist/`) |
+| `npm run preview` | Preview production build locally |
 
 ## Deployment (Render)
 
-1. Connect your repository to Render
-2. Set **Build Command**: `npm run build`
-3. Set **Publish Directory**: `dist`
+1. Connect repo to [Render](https://dashboard.render.com) as a **Static Site**
+2. Build command: `npm run build`
+3. Publish directory: `dist`
 4. Add environment variables in Render dashboard
-5. Add a **Rewrite Rule**: `/* → /index.html (200)` for SPA routing
+5. SPA routing handled automatically via `public/_redirects`
 
-## Environment Variables
+### Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_NHOST_SUBDOMAIN` | Nhost project subdomain |
-| `VITE_NHOST_REGION` | Nhost region (e.g. `eu-central-1`) |
-| `VITE_DEEPGRAM_KEY` | Deepgram API key |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_NHOST_SUBDOMAIN` | Yes | Nhost project subdomain |
+| `VITE_NHOST_REGION` | Yes | Nhost region (e.g. `eu-central-1`) |
+| `VITE_DEEPGRAM_KEY` | Yes | Deepgram API key |
+
+## Project Structure
+
+```
+├── public/
+│   └── _redirects          # SPA routing for Render/Netlify
+├── src/
+│   ├── components/
+│   │   ├── Dashboard.tsx    # Transcription UI with mic controls
+│   │   ├── ErrorBoundary.tsx# React error fallback
+│   │   ├── Login.tsx        # Auth form (sign in / sign up)
+│   │   └── ProtectedRoute.tsx# Auth guard wrapper
+│   ├── hooks/
+│   │   └── useDeepgram.ts   # Deepgram WebSocket live transcription
+│   ├── lib/
+│   │   └── auth.ts          # Nhost direct-fetch auth
+│   ├── App.tsx              # Routes + AuthContext provider
+│   ├── index.css            # Tailwind CSS imports + theme
+│   ├── main.tsx             # Entry point with ErrorBoundary
+│   └── vite-env.d.ts
+├── .env.example             # Environment variable template
+├── index.html
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
+```

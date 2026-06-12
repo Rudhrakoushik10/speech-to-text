@@ -38,7 +38,8 @@ async function signIn({ email, password }: { email: string; password: string }) 
     setSession(data.session)
     return { error: null }
   }
-  return { error: { message: data.message || data.error || 'Sign in failed' } }
+  const msg = data.message || data.error || (data.user ? 'Check your email to verify before signing in' : 'Sign in failed')
+  return { error: { message: msg } }
 }
 
 async function signUp({ email, password }: { email: string; password: string }) {
@@ -50,9 +51,13 @@ async function signUp({ email, password }: { email: string; password: string }) 
   const data = await res.json()
   if (data.session) {
     setSession(data.session)
-    return { error: null }
+    return { error: null, needsVerification: false }
   }
-  return { error: { message: data.message || data.error || 'Sign up failed' } }
+  const needsVerification = !data.session && !!data.user
+  if (needsVerification) {
+    return { error: null, needsVerification: true }
+  }
+  return { error: { message: data.message || data.error || 'Sign up failed' }, needsVerification: false }
 }
 
 function signOut() {
