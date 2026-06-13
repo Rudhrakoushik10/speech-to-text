@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
+import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk'
+import type { LiveTranscriptionEvent } from '@deepgram/sdk'
 
 export function useDeepgram() {
   const [transcript, setTranscript] = useState('')
@@ -6,10 +8,25 @@ export function useDeepgram() {
   const [listening, setListening] = useState(false)
   const [requesting, setRequesting] = useState(false)
   const [error, setError] = useState('')
-  const wsRef = useRef<WebSocket | null>(null)
+  const connectionRef = useRef<ReturnType<ReturnType<typeof createClient>['listen']['live']> | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const timeoutRef = useRef<number | null>(null)
+
+  const cleanup = useCallback(() => {
+    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+      try { recorderRef.current.stop() } catch {}
+    }
+    if (connectionRef.current) {
+      try { connectionRef.current.disconnect() } catch {}
+      connectionRef.current = null
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop())
+      streamRef.current = null
+    }
+    setListening(false)
+    setRequesting(false)
+  }, [])
 
   const startListening = useCallback(async () => {
     setError('')
@@ -42,30 +59,15 @@ export function useDeepgram() {
         throw new Error('Deepgram API key is missing. Set VITE_DEEPGRAM_KEY in your .env file.')
       }
 
-      const url = new URL('wss://api.deepgram.com/v1/listen')
-      url.searchParams.set('model', 'nova-2')
-      url.searchParams.set('interim_results', 'true')
-      url.searchParams.set('token', apiKey)
+      const deepgram = createClient(apiKey)
+      const connection = deepgram.listen.live({
+        model: 'nova-2',
+        interim_results: true,
+      })
 
-      const ws = new WebSocket(url.toString())
-      ws.binaryType = 'arraybuffer'
-      wsRef.current = ws
+      connectionRef.current = connection
 
-      let closed = false
-
-      timeoutRef.current = window.setTimeout(() => {
-        if (!closed) {
-          closed = true
-          ws.close()
-          setError('Connection timed out. Check your Deepgram API key and network.')
-          cleanup()
-        }
-      }, 10000)
-
-      ws.onopen = () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-        if (closed) return
-
+      connection.on(LiveTranscriptionEvents.Open, () => {
         const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
           ? 'audio/webm;codecs=opus'
           : 'audio/webm'
@@ -73,83 +75,46 @@ export function useDeepgram() {
         recorderRef.current = recorder
 
         recorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-            ws.send(event.data)
+          if (event.data.size > 0) {
+            connection.send(event.data)
           }
         }
 
         recorder.start(250)
         setListening(true)
         setRequesting(false)
-      }
+      })
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(typeof event.data === 'string' ? event.data : new TextDecoder().decode(event.data))
-          if (data.type === 'Results') {
-            const alt = data.channel?.alternatives?.[0]
-            if (alt && alt.transcript) {
-              if (data.is_final) {
-                setTranscript((prev) => (prev ? prev + ' ' + alt.transcript : alt.transcript))
-                setInterim('')
-              } else {
-                setInterim(alt.transcript)
-              }
-            }
+      connection.on(LiveTranscriptionEvents.Transcript, (data: LiveTranscriptionEvent) => {
+        const alt = data.channel?.alternatives?.[0]
+        if (alt && alt.transcript) {
+          if (data.is_final) {
+            setTranscript((prev) => (prev ? prev + ' ' + alt.transcript : alt.transcript))
+            setInterim('')
+          } else {
+            setInterim(alt.transcript)
           }
-        } catch {
         }
-      }
+      })
 
-      ws.onerror = () => {
-        if (!closed) {
-          closed = true
-          if (timeoutRef.current) clearTimeout(timeoutRef.current)
-          setError('Connection failed. Check your Deepgram API key.')
-          cleanup()
-        }
-      }
+      connection.on(LiveTranscriptionEvents.Error, (err: any) => {
+        const msg = err?.message || err?.error?.message || 'Connection failed. Check your Deepgram API key.'
+        setError(msg)
+        cleanup()
+      })
 
-      ws.onclose = (e) => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-        if (!closed) {
-          closed = true
-          if (e.code !== 1000) {
-            setError(`Connection closed (code ${e.code}). Check your API key.`)
-          }
-          cleanup()
-        }
-      }
-
-      function cleanup() {
-        if (recorderRef.current && recorderRef.current.state !== 'inactive') {
-          try { recorderRef.current.stop() } catch {}
-        }
-        if (stream.active) stream.getTracks().forEach((t) => t.stop())
-        setListening(false)
-        setRequesting(false)
-      }
+      connection.on(LiveTranscriptionEvents.Close, () => {
+        cleanup()
+      })
     } catch (err: any) {
       setError(err.message)
       setRequesting(false)
     }
-  }, [])
+  }, [cleanup])
 
   const stopListening = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
-      recorderRef.current.stop()
-    }
-    if (wsRef.current) {
-      wsRef.current.close()
-      wsRef.current = null
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop())
-    }
-    setListening(false)
-    setRequesting(false)
-  }, [])
+    cleanup()
+  }, [cleanup])
 
   return { transcript, interim, listening, requesting, error, startListening, stopListening }
 }
